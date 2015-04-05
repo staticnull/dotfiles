@@ -1,0 +1,6 @@
+# ReachLocal settings 
+alias cast='cd $PROJECTS_HOME/reachlocal/cloudprofile/iaf'
+alias cplug='cd $PROJECTS_HOME/reachlocal/cloudprofile_plugins'
+alias sg='cd $PROJECTS_HOME/reachlocal/social_graph'
+alias rl='cd $PROJECTS_HOME/reachlocal'
+alias rli='cd $PROJECTS_HOME/reachlocal/cloudprofile_plugins/rlapi/rli-api-server; ./run.bash'

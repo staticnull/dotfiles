@@ -1,0 +1,6 @@
+# Rails
+alias cuke='cucumber'
+alias rspecs='rspec spec'
+alias rtest='rspecs && cuke'
+
+alias rbes='bundle exec script/server'

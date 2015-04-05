@@ -1,0 +1,174 @@
+# GIT aliases
+alias st='git status --short'
+alias rb='git rebase -p'
+alias rbi='git rebase -p --interactive'
+alias rbm='git rebase -p master'
+alias gcp='git cherry-pick'
+alias stash='git stash'
+alias pop='git stash pop'
+alias ga='git add'
+alias gb='git branch'
+alias gba='git branch -a'
+alias gbd='git branch -D'
+alias gbr='git branch -r'
+alias gl='git log'
+alias glod='git log --oneline --decorate'
+alias gloh='git log origin/master..HEAD'
+alias glp='git log --pretty=format:"%h - %an, %ar : %s"'
+alias gm='git merge'
+alias squash='git merge --squash'
+alias gca='git commit -a'
+alias gcam='git commit -a -m'
+alias gcv='git commit -v'
+alias gc='git checkout'
+alias gcb='git checkout -b'
+# Checkout remote branch and start tracking it (e.g. gctb <local-branch> origin/<tracked-branch>)
+alias gctb='git checkout -tb'
+alias gcf='git checkout -f'
+alias gcm='git checkout master'
+alias gcm-amend='git commit --amend -m'
+alias gst='git show-ref --tags'
+alias reset='git reset'
+# Show the last commit that matches the given regex (e.g. show :/fix or show :/^Merge)
+alias show='git show'
+alias reflog='git reflog'
+alias fetch='git fetch'
+alias unstage='git reset HEAD'
+# Fetch from and merge with another repository or local branch (e.g. pull origin master)
+alias pull='git pull'
+# Update remote refs using local refs (e.g. push origin master)
+alias push='git push'
+# Create a remote branch from the local branch using the same name, does not track
+alias crb='git push --all'
+# Make local branch track remote branch (e.g. gbsu <local-branch> origin/<tracked-branch>)
+alias gbsu='git branch --set-upstream'
+# Create a remote branch from the local branch and start tracking it (e.g. gpu <local-branch>)
+alias gpu='git push -u origin'
+# Get HEAD branch
+alias ghb='git remote show origin 2> /dev/null | grep "HEAD branch:" | sed "s/[ ]*HEAD branch:[ ]*//"'
+# Get local branch
+alias glb='git name-rev --name-only HEAD'
+# Get remote that local branch is tracking
+alias gtr='git config branch.`ghb`.remote'
+alias grau='git remote add upstream'
+alias grso='git remote show origin'
+alias gbrd='git push origin --delete'
+alias gtrd=deleteRemoteTagAndPush
+
+alias graph='git log --graph --pretty=format:"%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(bold white)— %an%C(reset)%C(bold yellow)%d%C(reset)" --abbrev-commit --date=relative'
+alias switch=switchBranches
+alias sync=syncCurrentBranchWithRemote
+alias publish=mergeCurrentBranchWithRemoteAndPush
+alias fork-sync=syncCurrentBranchWithUpstream
+
+# GIT Functions
+
+function deleteRemoteTagAndPush() {
+        if [[ ! -n $1 ]]; then
+                echo 'Input tag required'
+        else
+                TAG=$1
+                git tag -d $TAG
+                git push origin :refs/tags/$TAG
+        fi
+}
+
+function setLocalAndRemoteBranches() {
+        if [[ $# -eq 0 ]]; then
+                LOCAL_BRANCH=master
+                REMOTE_BRANCH=master
+        elif [[ $# -eq 1 ]]; then
+                LOCAL_BRANCH=$1
+                REMOTE_BRANCH=$1
+        elif [[ $# -eq 2 ]]; then
+                LOCAL_BRANCH=$1
+                REMOTE_BRANCH=$2
+        else
+                echo 'More than 2 arguments not allowed (e.g. 1:<LOCAL_BRANCH> 2:<REMOTE_BRANCH>, defaults to master)'
+                return 1
+        fi
+        return 0
+}
+
+function setCurrentBranch() {
+        ref=$(git symbolic-ref HEAD 2> /dev/null)
+        if [[ ! -n $ref ]]; then
+                echo 'Unable to find HEAD ref'
+                return 1
+        fi
+        CURRENT_BRANCH="${ref#refs/heads/}"
+        return 0
+}
+
+function stashIfNeeded() {
+        UNSTAGED_CHANGES=0
+
+        if ! git diff --quiet HEAD; then
+                echo "Unstaged changes found on ${CURRENT_BRANCH} branch, stashing them..."
+                git stash
+                UNSTAGED_CHANGES=1
+        fi
+}
+
+function popIfNeeded() {
+        if [[ $UNSTAGED_CHANGES -eq 1 ]]; then
+                echo "Popping unstaged changes from stash back onto ${CURRENT_BRANCH} branch"
+                git stash pop
+        fi
+}
+
+function switchBranches() {
+        setCurrentBranch
+        NEW_BRANCH=$1
+        echo "Switching branches from ${CURRENT_BRANCH} to $NEW_BRANCH"
+        stashIfNeeded
+        git checkout $NEW_BRANCH
+        CURRENT_BRANCH=$NEW_BRANCH
+        popIfNeeded
+}
+
+function syncCurrentBranchWithRemote() {
+        if setLocalAndRemoteBranches $@ && setCurrentBranch; then
+                echo "Syncing ${CURRENT_BRANCH} branch with remote ${REMOTE_BRANCH} changes..."
+
+                stashIfNeeded
+                git checkout ${LOCAL_BRANCH}
+                # LOCAL_BRANCH has no changes, so we are going to fetch and do a fast-forward merge
+                git pull origin
+                git checkout ${CURRENT_BRANCH}
+                git rebase -p ${LOCAL_BRANCH}
+                popIfNeeded
+        fi
+}
+
+function mergeCurrentBranchWithRemoteAndPush() {
+        if setLocalAndRemoteBranches $@ && setCurrentBranch; then
+                echo "Syncing ${CURRENT_BRANCH} branch with remote ${REMOTE_BRANCH} changes before push..."
+                git checkout ${LOCAL_BRANCH}
+                # LOCAL_BRANCH should have no changes, so we are going to fetch and do a fast-forward merge
+                git pull origin
+                git checkout ${CURRENT_BRANCH}
+                git rebase -p ${LOCAL_BRANCH}
+                echo "Pushing ${CURRENT_BRANCH} branch changes to remote ${REMOTE_BRANCH}..."
+                git checkout ${LOCAL_BRANCH}
+                # Doing a fast-forward merge to bring LOCAL_BRANCH up to date before pushing
+                git merge ${CURRENT_BRANCH}
+                git push origin ${REMOTE_BRANCH}
+                git checkout ${CURRENT_BRANCH}
+        fi
+}
+
+function syncCurrentBranchWithUpstream() {
+        if setLocalAndRemoteBranches $@ && setCurrentBranch; then
+                echo "Syncing ${CURRENT_BRANCH} branch with upstream ${REMOTE_BRANCH} changes..."
+
+                stashIfNeeded
+                git checkout ${LOCAL_BRANCH}
+                git fetch upstream
+                # LOCAL_BRANCH has no changes, so we are going to fetch and do a fast-forward merge
+                git merge upstream/${REMOTE_BRANCH}
+                git checkout ${CURRENT_BRANCH}
+                git rebase -p ${LOCAL_BRANCH}
+                popIfNeeded
+        fi
+}

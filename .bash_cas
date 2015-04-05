@@ -1,0 +1,13 @@
+# Cassandra settings 
+#export DSE_HOME=/usr/local/dse-3.0.2 
+#export OPSC_HOME=/usr/local/opscenter-3.1.1
+export DSE_HOME=/usr/local/dse-3.1.4
+export OPSC_HOME=/usr/local/opscenter-3.2.2
+export CASSANDRA_HOME=$DSE_HOME/resources/cassandra
+
+alias cas='$DSE_HOME/bin/./dse cassandra -s -t -f'
+alias cli='$DSE_HOME/bin/./cassandra-cli'
+alias cql='$DSE_HOME/bin/./cqlsh'
+alias hive='$DSE_HOME/bin/./dse hive'
+alias ops='$OPSC_HOME/bin/./opscenter -f'
+alias opsa='$OPSC_HOME/agent/bin/./opscenter-agent'

@@ -1,0 +1,19 @@
+# Grails
+alias gc='grails clean'
+alias gra='grails run-app'
+alias gta='grails test-app'
+alias gtare='grails test-app -rerun'
+alias gtaui='grails test-app unit: integration:'
+alias gtauire='grails test-app unit: integration: -rerun'
+alias gtau='grails test-app unit:'
+alias gtai='grails test-app integration:'
+alias gtas='grails test-app spock:'
+alias gsta='splitTests.groovy'
+
+alias gcivy='rm -rf ~/.grails/ivy-cache; grails clean'
+alias gcnuke='rm -rf ~/.grails/; grails clean'
+
+alias narc='grails codenarc'
+
+alias gtao='open ./target/test-reports/html/index.html'
+alias narco='open ./target/test-reports/CodeNarc-Report.html'
